@@ -1,0 +1,248 @@
+@font-face {
+  font-family: "Roboto-Bold";
+  src: url("/src/assets/Roboto-Bold.ttf") format("truetype");
+}
+body,
+html,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.canvas-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.bg {
+  background-color: #ffffff;
+  background-image: linear-gradient(
+      45deg,
+      #f3f3f3 25%,
+      transparent 25%,
+      transparent 75%,
+      #f3f3f3 75%,
+      #f3f3f3
+    ),
+    linear-gradient(
+      45deg,
+      #f3f3f3 25%,
+      #ffffff 25%,
+      #ffffff 75%,
+      #f3f3f3 75%,
+      #f3f3f3
+    );
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+.bg.dark {
+  background-color: #313131;
+  background-image: linear-gradient(
+      45deg,
+      #333333 25%,
+      transparent 25%,
+      transparent 75%,
+      #333333 75%,
+      #333333
+    ),
+    linear-gradient(
+      45deg,
+      #333333 25%,
+      #313131 25%,
+      #313131 75%,
+      #333333 75%,
+      #333333
+    );
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+canvas {
+  height: 100vh;
+}
+.title {
+  position: fixed;
+  top: 6%;
+  left: 50%;
+  width: 80%;
+  transform: translate(-50%, 0%);
+  text-align: center;
+  color: brown;
+  font-size: 32px;
+  font-family: "Roboto-Bold";
+  font-weight: 700;
+  font-style: normal; /* font-weight: 900;font-style: normal; */
+  margin: 10px;
+}
+
+.upload-button {
+  background-color: #ff568a;
+  border-width: 0px;
+  border-radius: 50%;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  z-index: 10;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.upload-button:hover {
+  cursor: pointer;
+}
+.upload-container {
+  width: 100px;
+  height: 100px;
+}
+.bottom-svg {
+  width: 100%;
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  z-index: 10;
+}
+.placeholder {
+  height: 300px;
+  background-color: #009aff;
+}
+.demo {
+  margin-top: -10px;
+  padding: 20px;
+  height: 200px;
+  background-color: #009aff;
+  text-align: center;
+  color: #fff;
+  font-size: 20px;
+  font-family: "Roboto-Bold";
+}
+.favicon:hover {
+  cursor: pointer;
+}
+.demoimg {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 12px;
+}
+.demoimg:hover {
+  cursor: pointer;
+}
+.description {
+  display: inline-block;
+  color: white;
+  min-width: 60px;
+  font-family: "Roboto-Bold";
+}
+select {
+  width: 120px;
+  background-color: #1d1d1d;
+  color: white;
+  font-size: 16px;
+  font-family: "Roboto-Bold";
+  border: none;
+  border-radius: 5px;
+  padding: 5px;
+  margin: 5px;
+}
+.run-button {
+  margin-left: 20px;
+  width: 40px;
+  height: 40px;
+  background-color: #1d90ee;
+  border: none;
+  border-radius: 25px;
+  padding: 5px;
+  margin: 5px;
+  display: inline-block;
+  margin-left: 20px;
+}
+.run-button:hover {
+  cursor: pointer;
+}
+.save-button {
+  margin-left: 20px;
+  width: 40px;
+  height: 40px;
+  background-color: rgb(157, 202, 90);
+  border: none;
+  border-radius: 25px;
+  padding: 5px;
+  margin: 5px;
+  display: inline-block;
+  margin-left: 20px;
+}
+.save-button:hover {
+  cursor: pointer;
+}
+.goback {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  background-color: #d21d5a;
+  border: none;
+  border-radius: 20px;
+  padding: 5px;
+  margin: 5px;
+}
+.goback:hover {
+  cursor: pointer;
+}
+.floating-menu {
+  position: absolute;
+  background-color: #1d1d1d;
+  border-radius: 20px;
+  color: white;
+  max-width: 100%;
+  width: 280px;
+  padding: 20px;
+  bottom: 25px;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.5s ease;
+}
+.dragLine {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 9px;
+  transform: translate(-100%, 0);
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.dragLine:hover {
+  cursor: ew-resize;
+}
+.dragBall {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  background-color: rgba(0, 0, 0, 0.9);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
