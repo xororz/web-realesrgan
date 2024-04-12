@@ -169,7 +169,6 @@ self.addEventListener("message", async (e) => {
             scaled.width - pad_right * factor,
             scaled.height - pad_bottom * factor
           );
-          // console.log(i, j, x2 - x1, y2 - y1);
           current++;
           let progress = (current / total) * 100;
           sendprogress(progress);
@@ -341,11 +340,12 @@ self.addEventListener("message", async (e) => {
   const start = Date.now();
   let output;
   try {
-    if (data?.fixed) {
-      output = await enlargeImageWithFixedInput(model, input, factor);
-    } else {
-      output = await enlargeImage(model, input, factor);
-    }
+    // if (data?.fixed) {
+    //   output = await enlargeImageWithFixedInput(model, input, factor);
+    // } else {
+    //   output = await enlargeImage(model, input, factor);
+    // }
+    output = await enlargeImageWithFixedInput(model, input, factor);
   } catch (e) {
     postMessage({ alertmsg: e.toString() });
   }
