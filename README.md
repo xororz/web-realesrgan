@@ -1,33 +1,30 @@
-# canvastest
+# web-realesrgan
 
-This template should help get you started developing with Vue 3 in Vite.
+Run Real-ESRGAN in the browser with tensorflow.js
 
-## Recommended IDE Setup
+## Usage
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+### Online Demo
 
-## Type Support for `.vue` Imports in TS
+[https://cappuccino.moe](https://cappuccino.moe)
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+### Accelaration
 
-## Customize configuration
+- WebGL: Enabled on most devices by default.
+- WebGPU: Enabled on Chrome with `chrome://flags/#enable-unsafe-webgpu` flag or other browsers with WebGPU support. Much faster than WebGL.
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+### Development
 
-## Project Setup
-
-```sh
+```bash
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## Credits
 
-```sh
-npm run build
-```
+Pytorch model -> ONNX -> Tensorflow saved model -> Tensorflow.js
+
+- [xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)
+- [microsoft/onnxruntime](https://github.com/microsoft/onnxruntime)
+- [PINTO0309/onnx2tf](https://github.com/PINTO0309/onnx2tf)
+- [tensorflow/tfjs](https://github.com/tensorflow/tfjs)
