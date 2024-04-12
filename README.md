@@ -8,6 +8,8 @@ Run Real-ESRGAN in the browser with tensorflow.js
 
 [https://cappuccino.moe](https://cappuccino.moe)
 
+![demo](./src/assets/demo.png)
+
 ### Accelaration
 
 - WebGL: Enabled on most devices by default.
