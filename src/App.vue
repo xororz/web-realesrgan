@@ -225,6 +225,9 @@ export default {
     this.initializeCanvas();
     this.linePosition = this.$refs.canvas.width * 2;
     this.$refs.dragLine.style.left = this.linePosition / this.dpr + "px";
+    (async () => {
+      await Module();
+    })();
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.handleResize);
