@@ -29,6 +29,7 @@
       />
     </div>
     <canvas ref="canvas"></canvas>
+    <canvas ref="imgCanvas" style="display: none"></canvas>
     <button v-show="!imgLoaded" class="upload-button" @click="handleClick">
       <div class="upload-container">
         <svg viewBox="0 0 24 24">
@@ -144,6 +145,7 @@
 
 <script>
 import Img from "./image";
+import Module from "./imghelper";
 
 export default {
   data() {
@@ -265,29 +267,37 @@ export default {
         this.imgLoaded = true;
         this.drawLine = true;
 
-        const imageData = await Jimp.read(this.img.src);
-        this.input = new Img(imageData.bitmap.width, imageData.bitmap.height);
-        this.input.data = imageData.bitmap.data;
-        //check if has alpha channel
-        for (let i = 3; i < this.input.data.length; i += 4) {
-          if (this.input.data[i] !== 255) {
-            this.hasAlpha = true;
-            break;
-          }
-        }
-        // copy alpha channel
+        let wasmModule = await Module();
+        const imgCanvas = this.$refs.imgCanvas;
+        imgCanvas.width = this.img.width;
+        imgCanvas.height = this.img.height;
+        const imgCtx = imgCanvas.getContext("2d");
+        imgCtx.drawImage(this.img, 0, 0);
+        this.input = new Img(this.img.width, this.img.height);
+        let data = imgCtx.getImageData(
+          0,
+          0,
+          this.img.width,
+          this.img.height
+        ).data;
+        this.input.data = new Uint8Array(data);
+        const numPixels = this.input.width * this.input.height;
+        const bytesPerImage = numPixels * 4;
+        let sourcePtr = wasmModule._malloc(bytesPerImage);
+        let targetPtr = wasmModule._malloc(bytesPerImage);
+        wasmModule.HEAPU8.set(this.input.data, sourcePtr);
+        this.hasAlpha = wasmModule._check_alpha(sourcePtr, numPixels);
         if (this.hasAlpha) {
-          this.inputAlpha = new Img(
-            imageData.bitmap.width,
-            imageData.bitmap.height
+          this.inputAlpha = new Img(this.img.width, this.img.height);
+          this.inputAlpha.data = new Uint8Array(bytesPerImage);
+          wasmModule._copy_alpha_to_rgb(sourcePtr, targetPtr, numPixels);
+          this.inputAlpha.data.set(
+            wasmModule.HEAPU8.subarray(targetPtr, targetPtr + bytesPerImage)
           );
-          this.inputAlpha.data = new Uint8Array(this.input.data);
-          for (let i = 0; i < this.inputAlpha.data.length; i += 4) {
-            this.inputAlpha.data[i] = this.input.data[i + 3];
-            this.inputAlpha.data[i + 1] = this.input.data[i + 3];
-            this.inputAlpha.data[i + 2] = this.input.data[i + 3];
-          }
         }
+        wasmModule._free(sourcePtr);
+        wasmModule._free(targetPtr);
+
         const canvas = this.$refs.canvas;
         const containerWidth = canvas.width;
         const containerHeight = canvas.height;
@@ -353,7 +363,6 @@ export default {
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 绘制第一张图（完整图像）
       ctx.drawImage(
         this.img,
         this.imgX,
@@ -362,7 +371,6 @@ export default {
         this.img.height * this.imgScale
       );
 
-      // 绘制第二张图（处理后的图像）
       if (this.processedImg.src) {
         ctx.drawImage(
           this.processedImg,
@@ -381,18 +389,6 @@ export default {
           this.img.height * this.imgScale
         );
       }
-
-      // 如果需要绘制分割线
-      // if (this.drawLine) {
-      //   ctx.globalAlpha = 0.5;
-      //   ctx.beginPath();
-      //   ctx.moveTo(this.linePosition, 0);
-      //   ctx.lineTo(this.linePosition, canvas.height);
-      //   ctx.strokeStyle = "black";
-      //   ctx.lineWidth = 20;
-      //   ctx.stroke();
-      //   ctx.globalAlpha = 1;
-      // }
     },
     startDragging(event) {
       const rect = this.$refs.canvas.getBoundingClientRect();
@@ -595,9 +591,6 @@ export default {
     startTask() {
       if (this.input === null) return;
       this.isProcessing = true;
-      // const worker = new Worker(new URL("./worker.js", import.meta.url), {
-      //   type: "module",
-      // });
       let worker = this.worker;
       let start = Date.now();
       worker.addEventListener("message", (e) => {
@@ -637,34 +630,28 @@ export default {
               else this.output.data[i + 3] = 255;
             }
           }
-          new Jimp(this.output.width, this.output.height, (err, image) => {
-            if (err) throw err;
-            image.bitmap.data = this.output.data;
-            // if (this.scale === 2) {
-            //   image.resize(
-            //     output.width / 2,
-            //     output.height / 2,
-            //     Jimp.RESIZE_BICUBIC
-            //   );
-            // }
-            // image.quality(75);
-            let type = Jimp.MIME_JPEG;
-            if (this.hasAlpha) type = Jimp.MIME_PNG;
-            image.getBase64(type, (err, src) => {
-              if (err) throw err;
-              this.processedImg.src = src;
-              this.processedImg.onload = () => {
-                this.linePosition = this.$refs.canvas.width * 0.5;
-                this.$refs.dragLine.style.left =
-                  this.linePosition / this.dpr + "px";
-                this.drawImage();
-                this.info =
-                  "Done! Time used: " + (Date.now() - start) / 1000 + "s";
-              };
-              this.isProcessing = false;
-              this.isDone = true;
-            });
-          });
+
+          const imgCanvas = this.$refs.imgCanvas;
+          const imgCtx = imgCanvas.getContext("2d");
+          imgCtx.clearRect(0, 0, imgCanvas.width, imgCanvas.height);
+          imgCanvas.width = this.output.width;
+          imgCanvas.height = this.output.height;
+          let outImg = imgCtx.createImageData(output.width, output.height);
+          outImg.data.set(this.output.data);
+          imgCtx.putImageData(outImg, 0, 0);
+          let type = "image/jpeg";
+          let quality = 0.92;
+          if (this.hasAlpha) type = "image/png";
+          this.processedImg.src = imgCanvas.toDataURL(type, quality);
+          this.processedImg.onload = () => {
+            this.linePosition = this.$refs.canvas.width * 0.5;
+            this.$refs.dragLine.style.left =
+              this.linePosition / this.dpr + "px";
+            this.drawImage();
+            this.info = "Done! Time used: " + (Date.now() - start) / 1000 + "s";
+          };
+          this.isProcessing = false;
+          this.isDone = true;
           worker.terminate();
         }
       });
