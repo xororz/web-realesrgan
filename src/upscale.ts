@@ -5,9 +5,13 @@ export default async function upscale(
   image: Image,
   model: any
 ): Promise<Image> {
-  let tensor = img2tensor(image);
-  let result = model.predict(tensor) as tf.Tensor;
-  let resultImage = await tensor2img(result);
+  const result = tf.tidy(() => {
+    const tensor = img2tensor(image);
+    const result = model.predict(tensor) as tf.Tensor;
+    return result;
+  });
+  const resultImage = await tensor2img(result);
+  tf.dispose(result);
   return resultImage;
 }
 
@@ -25,6 +29,7 @@ function img2tensor(image: Image): tf.Tensor {
 async function tensor2img(tensor: tf.Tensor): Promise<Image> {
   let [_, height, width, __] = tensor.shape;
   let arr = await tensor.data();
+  tensor.dispose();
   let clipped = new Uint8Array(
     arr.map((x) => {
       x = Math.min(1, Math.max(0, x));
