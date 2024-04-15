@@ -208,6 +208,7 @@ export default {
       worker: new Worker(new URL("./worker.js", import.meta.url), {
         type: "module",
       }),
+      wasmModule: null,
     };
   },
   watch: {
@@ -271,19 +272,19 @@ export default {
         this.drawLine = true;
 
         let wasmModule = await Module();
+        this.wasmModule = wasmModule;
         const imgCanvas = this.$refs.imgCanvas;
         imgCanvas.width = this.img.width;
         imgCanvas.height = this.img.height;
         const imgCtx = imgCanvas.getContext("2d");
         imgCtx.drawImage(this.img, 0, 0);
-        this.input = new Img(this.img.width, this.img.height);
         let data = imgCtx.getImageData(
           0,
           0,
           this.img.width,
           this.img.height
         ).data;
-        this.input.data = new Uint8Array(data);
+        this.input = new Img(this.img.width, this.img.height, data);
         const numPixels = this.input.width * this.input.height;
         const bytesPerImage = numPixels * 4;
         let sourcePtr = wasmModule._malloc(bytesPerImage);
@@ -292,7 +293,6 @@ export default {
         this.hasAlpha = wasmModule._check_alpha(sourcePtr, numPixels);
         if (this.hasAlpha) {
           this.inputAlpha = new Img(this.img.width, this.img.height);
-          this.inputAlpha.data = new Uint8Array(bytesPerImage);
           wasmModule._copy_alpha_to_rgb(sourcePtr, targetPtr, numPixels);
           this.inputAlpha.data.set(
             wasmModule.HEAPU8.subarray(targetPtr, targetPtr + bytesPerImage)
@@ -610,28 +610,46 @@ export default {
         this.progress = progress;
         if (done) {
           if (!this.hasAlpha || (this.hasAlpha && this.inputAlpha)) {
-            this.output = output;
+            let factor = this.modelzoo[this.model].factor;
+            this.output = new Img(
+              factor * this.input.width,
+              factor * this.input.height,
+              new Uint8ClampedArray(output)
+            );
           }
           this.info = "Processing Image...";
           if (this.inputAlpha) {
-            worker.postMessage({
-              input: this.inputAlpha.data,
-              fixed: this.modelzoo[this.model].fixed,
-              factor: this.modelzoo[this.model].factor,
-              width: this.inputAlpha.width,
-              height: this.inputAlpha.height,
-              model: this.model,
-              backend: this.backend,
-              hasAlpha: true,
-            });
+            worker.postMessage(
+              {
+                input: this.inputAlpha.data.buffer,
+                fixed: this.modelzoo[this.model].fixed,
+                factor: this.modelzoo[this.model].factor,
+                width: this.inputAlpha.width,
+                height: this.inputAlpha.height,
+                model: this.model,
+                backend: this.backend,
+                hasAlpha: true,
+              },
+              [this.inputAlpha.data.buffer]
+            );
             this.inputAlpha = null;
             return;
           }
           if (this.hasAlpha) {
-            for (let i = 0; i < output.data.length; i += 4) {
-              if (output.data[i] < 128) this.output.data[i + 3] = 0;
-              else this.output.data[i + 3] = 255;
-            }
+            let outputArray = new Uint8Array(output);
+            let wasmModule = this.wasmModule;
+            let sourcePtr = wasmModule._malloc(outputArray.length);
+            let targetPtr = wasmModule._malloc(outputArray.length);
+            let numPixels = outputArray.length / 4;
+            wasmModule.HEAPU8.set(outputArray, sourcePtr);
+            wasmModule.HEAPU8.set(this.output.data, targetPtr);
+            wasmModule._copy_alpha_channel(sourcePtr, targetPtr, numPixels);
+            this.output.data.set(
+              wasmModule.HEAPU8.subarray(
+                targetPtr,
+                targetPtr + outputArray.length
+              )
+            );
           }
 
           const imgCanvas = this.$refs.imgCanvas;
@@ -639,13 +657,22 @@ export default {
           imgCtx.clearRect(0, 0, imgCanvas.width, imgCanvas.height);
           imgCanvas.width = this.output.width;
           imgCanvas.height = this.output.height;
-          let outImg = imgCtx.createImageData(output.width, output.height);
+          let outImg = imgCtx.createImageData(
+            this.output.width,
+            this.output.height
+          );
           outImg.data.set(this.output.data);
           imgCtx.putImageData(outImg, 0, 0);
           let type = "image/jpeg";
           let quality = 0.92;
           if (this.hasAlpha) type = "image/png";
-          this.processedImg.src = imgCanvas.toDataURL(type, quality);
+          this.processedImg.src = imgCanvas.toBlob(
+            (blob) => {
+              this.processedImg.src = URL.createObjectURL(blob);
+            },
+            type,
+            quality
+          );
           this.processedImg.onload = () => {
             this.linePosition = this.$refs.canvas.width * 0.5;
             this.$refs.dragLine.style.left =
@@ -658,16 +685,19 @@ export default {
           worker.terminate();
         }
       });
-      worker.postMessage({
-        input: this.input.data,
-        fixed: this.modelzoo[this.model].fixed,
-        factor: this.modelzoo[this.model].factor,
-        width: this.input.width,
-        height: this.input.height,
-        model: this.model,
-        backend: this.backend,
-        hasAlpha: false,
-      });
+      worker.postMessage(
+        {
+          input: this.input.data.buffer,
+          fixed: this.modelzoo[this.model].fixed,
+          factor: this.modelzoo[this.model].factor,
+          width: this.input.width,
+          height: this.input.height,
+          model: this.model,
+          backend: this.backend,
+          hasAlpha: false,
+        },
+        [this.input.data.buffer]
+      );
     },
     saveImage() {
       const a = document.createElement("a");

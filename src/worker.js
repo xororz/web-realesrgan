@@ -41,8 +41,7 @@ self.addEventListener("message", async (e) => {
   if (!model) {
     return;
   }
-  const input = new Img(data.width, data.height);
-  input.data = data.input;
+  const input = new Img(data.width, data.height, new Uint8Array(data.input));
   let hasAlpha = data.hasAlpha;
   function sendprogress(progress) {
     if (hasAlpha) {
@@ -56,126 +55,6 @@ self.addEventListener("message", async (e) => {
       progress: progress,
       info: `Processing ${progress.toFixed(2)}%`,
     });
-  }
-  async function enlargeImage(
-    model,
-    inputImg,
-    factor = 4,
-    tilesize = 32,
-    padsize = 8
-  ) {
-    if (hasAlpha) {
-      tilesize = 16;
-      padsize = 4;
-    }
-    const width = inputImg.width;
-    const height = inputImg.height;
-    const output = new Img(width * factor, height * factor);
-    const total = Math.ceil(width / tilesize) * Math.ceil(height / tilesize);
-    let current = 0;
-    let useModel = new Array(total).fill(false);
-    if (hasAlpha) {
-      for (let i = 0; i < width; i += tilesize) {
-        for (let j = 0; j < height; j += tilesize) {
-          const x1 = Math.max(i, 0);
-          const y1 = Math.max(j, 0);
-          const x2 = Math.min(i + tilesize, width);
-          const y2 = Math.min(j + tilesize, height);
-          const tile = new Img(x2 - x1, y2 - y1);
-          tile.getImageCrop(0, 0, input, x1, y1, x2, y2);
-          for (let k = 4; k < tile.data.length; k += 4) {
-            if (tile.data[k + 3] !== tile.data[3]) {
-              useModel[current] = true;
-              break;
-            }
-          }
-          if (useModel[current]) {
-            current++;
-            continue;
-          }
-          let scaled = new Img(tile.width * factor, tile.height * factor);
-          for (let k = 0; k < scaled.data.length; k += 4) {
-            scaled.data[k] = tile.data[3];
-            scaled.data[k + 1] = tile.data[3];
-            scaled.data[k + 2] = tile.data[3];
-          }
-          output.getImageCrop(
-            i * factor,
-            j * factor,
-            scaled,
-            0,
-            0,
-            scaled.width,
-            scaled.height
-          );
-          current++;
-        }
-      }
-      current = 0;
-      for (let i = 0; i < width; i += tilesize) {
-        for (let j = 0; j < height; j += tilesize) {
-          if (!useModel[current]) {
-            current++;
-            let progress = (current / total) * 100;
-            sendprogress(progress);
-            continue;
-          }
-          const x1 = Math.max(i - padsize, 0);
-          const y1 = Math.max(j - padsize, 0);
-          const x2 = Math.min(i + tilesize + padsize, width);
-          const y2 = Math.min(j + tilesize + padsize, height);
-          const pad_left = i - x1;
-          const pad_top = j - y1;
-          const pad_right = Math.max(0, x2 - (i + tilesize));
-          const pad_bottom = Math.max(0, y2 - (j + tilesize));
-          const tile = new Img(x2 - x1, y2 - y1);
-          tile.getImageCrop(0, 0, input, x1, y1, x2, y2);
-          let scaled = await upscale(tile, model);
-          output.getImageCrop(
-            i * factor,
-            j * factor,
-            scaled,
-            pad_left * factor,
-            pad_top * factor,
-            scaled.width - pad_right * factor,
-            scaled.height - pad_bottom * factor
-          );
-          // console.log(i, j, x2 - x1, y2 - y1);
-          current++;
-          let progress = (current / total) * 100;
-          sendprogress(progress);
-        }
-      }
-    } else {
-      for (let i = 0; i < width; i += tilesize) {
-        for (let j = 0; j < height; j += tilesize) {
-          const x1 = Math.max(i - padsize, 0);
-          const y1 = Math.max(j - padsize, 0);
-          const x2 = Math.min(i + tilesize + padsize, width);
-          const y2 = Math.min(j + tilesize + padsize, height);
-          const pad_left = i - x1;
-          const pad_top = j - y1;
-          const pad_right = Math.max(0, x2 - (i + tilesize));
-          const pad_bottom = Math.max(0, y2 - (j + tilesize));
-          const tile = new Img(x2 - x1, y2 - y1);
-          tile.getImageCrop(0, 0, input, x1, y1, x2, y2);
-          let scaled = await upscale(tile, model);
-          output.getImageCrop(
-            i * factor,
-            j * factor,
-            scaled,
-            pad_left * factor,
-            pad_top * factor,
-            scaled.width - pad_right * factor,
-            scaled.height - pad_bottom * factor
-          );
-          current++;
-          let progress = (current / total) * 100;
-          sendprogress(progress);
-        }
-      }
-    }
-    return output;
   }
   async function enlargeImageWithFixedInput(
     model,
@@ -273,7 +152,6 @@ self.addEventListener("message", async (e) => {
             scaled.width - pad_right[i] * factor,
             scaled.height - pad_bottom[j] * factor
           );
-          // console.log(i, j, x2 - x1, y2 - y1);
           current++;
         }
       }
@@ -292,7 +170,7 @@ self.addEventListener("message", async (e) => {
           const y2 = locs_y[j] + input_size;
           const tile = new Img(input_size, input_size);
           tile.getImageCrop(0, 0, inputImg, x1, y1, x2, y2);
-          let scaled = await upscale(tile, model);
+          let scaled = await upscale(tile, model, true);
           output.getImageCrop(
             (x1 + pad_left[i]) * factor,
             (y1 + pad_top[j]) * factor,
@@ -302,7 +180,6 @@ self.addEventListener("message", async (e) => {
             scaled.width - pad_right[i] * factor,
             scaled.height - pad_bottom[j] * factor
           );
-          // console.log(i, j, x2 - x1, y2 - y1);
           current++;
           let progress = (current / total) * 100;
           sendprogress(progress);
@@ -327,7 +204,6 @@ self.addEventListener("message", async (e) => {
             scaled.width - pad_right[i] * factor,
             scaled.height - pad_bottom[j] * factor
           );
-          // console.log(i, j, x2 - x1, y2 - y1);
           current++;
           let progress = (current / total) * 100;
           sendprogress(progress);
@@ -340,21 +216,25 @@ self.addEventListener("message", async (e) => {
   const start = Date.now();
   let output;
   try {
-    // if (data?.fixed) {
-    //   output = await enlargeImageWithFixedInput(model, input, factor);
-    // } else {
-    //   output = await enlargeImage(model, input, factor);
-    // }
     output = await enlargeImageWithFixedInput(model, input, factor);
   } catch (e) {
     postMessage({ alertmsg: e.toString() });
   }
   const end = Date.now();
   console.log("Time:", end - start);
+  await new Promise((resolve) => setTimeout(resolve, 10));
   postMessage({
     progress: 100,
-    done: true,
-    output: output,
     info: `Processing image...`,
   });
+  postMessage(
+    {
+      progress: 100,
+      done: true,
+      output: output.data.buffer,
+      info: `Processing image...`,
+    },
+    [output.data.buffer]
+  );
+  console.log("output");
 });

@@ -2,10 +2,14 @@ export default class Image {
   width: number;
   height: number;
   data: Uint8Array;
-  constructor(width: number, height: number) {
+  constructor(
+    width: number,
+    height: number,
+    data = new Uint8Array(width * height * 4)
+  ) {
     this.width = width;
     this.height = height;
-    this.data = new Uint8Array(width * height * 4);
+    this.data = data;
   }
   getImageCrop(
     x: number,

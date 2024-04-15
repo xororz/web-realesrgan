@@ -3,11 +3,15 @@ import Image from "./image";
 
 export default async function upscale(
   image: Image,
-  model: any
+  model: tf.GraphModel,
+  alpha = false
 ): Promise<Image> {
   const result = tf.tidy(() => {
     const tensor = img2tensor(image);
-    const result = model.predict(tensor) as tf.Tensor;
+    let result = model.predict(tensor) as tf.Tensor;
+    if (alpha) {
+      result = tf.greater(result, 0.5);
+    }
     return result;
   });
   const resultImage = await tensor2img(result);
@@ -16,32 +20,26 @@ export default async function upscale(
 }
 
 function img2tensor(image: Image): tf.Tensor {
-  let arr = new Float32Array(image.width * image.height * 3);
-  for (let i = 0; i < image.width * image.height; i++) {
-    arr[i * 3] = image.data[i * 4] / 255;
-    arr[i * 3 + 1] = image.data[i * 4 + 1] / 255;
-    arr[i * 3 + 2] = image.data[i * 4 + 2] / 255;
-  }
-  let tensor = tf.tensor4d(arr, [1, image.height, image.width, 3]);
+  let imgdata = new ImageData(image.width, image.height);
+  imgdata.data.set(image.data);
+  let tensor = tf.browser.fromPixels(imgdata).div(255).toFloat().expandDims();
   return tensor;
 }
 
 async function tensor2img(tensor: tf.Tensor): Promise<Image> {
   let [_, height, width, __] = tensor.shape;
-  let arr = await tensor.data();
-  tensor.dispose();
-  let clipped = new Uint8Array(
-    arr.map((x) => {
-      x = Math.min(1, Math.max(0, x));
-      return Math.floor(x * 255);
-    })
+
+  let clipped = tf.tidy(() =>
+    tensor
+      .reshape([height, width, 3])
+      .mul(255)
+      .cast("int32")
+      .clipByValue(0, 255)
   );
-  let image = new Image(width, height);
-  for (let i = 0; i < width * height; i++) {
-    image.data[i * 4] = clipped[i * 3];
-    image.data[i * 4 + 1] = clipped[i * 3 + 1];
-    image.data[i * 4 + 2] = clipped[i * 3 + 2];
-    image.data[i * 4 + 3] = 255;
-  }
+  tensor.dispose();
+  let data = await tf.browser.toPixels(clipped as tf.Tensor3D);
+  clipped.dispose();
+  let image = new Image(width, height, data as unknown as Uint8Array);
+
   return image;
 }
