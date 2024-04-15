@@ -236,5 +236,4 @@ self.addEventListener("message", async (e) => {
     },
     [output.data.buffer]
   );
-  console.log("output");
 });

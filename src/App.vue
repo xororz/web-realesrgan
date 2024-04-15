@@ -666,7 +666,7 @@ export default {
           let type = "image/jpeg";
           let quality = 0.92;
           if (this.hasAlpha) type = "image/png";
-          this.processedImg.src = imgCanvas.toBlob(
+          imgCanvas.toBlob(
             (blob) => {
               this.processedImg.src = URL.createObjectURL(blob);
             },
