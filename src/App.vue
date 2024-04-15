@@ -650,6 +650,10 @@ export default {
                 targetPtr + outputArray.length
               )
             );
+            wasmModule._free(sourcePtr);
+            wasmModule._free(targetPtr);
+            wasmModule = null;
+            this.wasmModule = null;
           }
 
           const imgCanvas = this.$refs.imgCanvas;
@@ -662,6 +666,9 @@ export default {
             this.output.height
           );
           outImg.data.set(this.output.data);
+          this.input = null;
+          this.inputAlpha = null;
+          this.output = null;
           imgCtx.putImageData(outImg, 0, 0);
           let type = "image/jpeg";
           let quality = 0.92;
