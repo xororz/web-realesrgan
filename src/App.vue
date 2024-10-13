@@ -179,7 +179,7 @@
         <div>
           <button class="question-button" v-if="!isProcessing && !isDone">
             <a
-              href="https://github.com/xororz/web-realesrgan?tab=readme-ov-file#models"
+              href="https://github.com/xororz/web-realesrgan/?tab=readme-ov-file#best-practice"
               target="_blank"
             >
               <svg
