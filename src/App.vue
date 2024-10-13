@@ -388,10 +388,10 @@ export default {
   mounted() {
     this.model_type = localStorage.getItem("model_type") || "realcugan";
     this.model = localStorage.getItem("model") || "anime_plus";
-    this.factor = localStorage.getItem("factor") || 4;
+    this.factor = Number(localStorage.getItem("factor")) || 4;
     this.denoise = localStorage.getItem("denoise") || "conservative";
-    this.tile_size = localStorage.getItem("tile_size") || 64;
-    this.min_lap = localStorage.getItem("min_lap") || 12;
+    this.tile_size = Number(localStorage.getItem("tile_size")) || 64;
+    this.min_lap = Number(localStorage.getItem("min_lap")) || 12;
     this.backend = localStorage.getItem("backend") || "webgl";
     window.addEventListener("resize", this.handleResize);
     this.initializeCanvas();
