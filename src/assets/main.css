@@ -142,7 +142,8 @@ canvas {
   font-family: "Roboto-Bold";
 }
 select {
-  width: 120px;
+  width: 150px;
+  /* height: 30px; */
   background-color: #1d1d1d;
   color: white;
   font-size: 16px;
@@ -150,10 +151,9 @@ select {
   border: none;
   border-radius: 5px;
   padding: 5px;
-  margin: 5px;
+  margin: 3px;
 }
 .run-button {
-  margin-left: 20px;
   width: 40px;
   height: 40px;
   background-color: #1d90ee;
@@ -161,8 +161,25 @@ select {
   border-radius: 25px;
   padding: 5px;
   margin: 5px;
-  display: inline-block;
   margin-left: 20px;
+  margin-right: -20px;
+  display: inline-block;
+}
+.question-button {
+  width: 40px;
+  height: 40px;
+  background-color: #1d1d1d;
+  border: none;
+  border-radius: 25px;
+  padding: 5px;
+  margin: 5px;
+  margin-left: 20px;
+  margin-right: -20px;
+  margin-bottom: 40px;
+  display: inline-block;
+}
+.question-button:hover {
+  cursor: pointer;
 }
 .run-button:hover {
   cursor: pointer;
@@ -201,13 +218,33 @@ select {
 .goback:hover {
   cursor: pointer;
 }
+.github {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border: none;
+  border-radius: 10px;
+  user-select: none;
+}
+.github:hover {
+  cursor: pointer;
+}
 .floating-menu {
   position: absolute;
   background-color: #1d1d1d;
   border-radius: 20px;
   color: white;
   max-width: 100%;
-  width: 280px;
+  width: 320px;
+  height: 200px;
+  /* width: 280px; */
+  max-width: 80%;
   padding: 20px;
   bottom: 25px;
   left: 50%;
@@ -217,6 +254,7 @@ select {
   justify-content: center;
   align-items: center;
   transition: all 0.5s ease;
+  user-select: none;
 }
 .dragLine {
   position: fixed;

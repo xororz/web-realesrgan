@@ -58,7 +58,14 @@
         </g>
       </svg>
     </button>
-    <div class="floating-menu" v-if="imgLoaded" @mousedown.stop>
+    <a
+      href="https://github.com/xororz/web-realesrgan"
+      v-show="imgLoaded"
+      target="_blank"
+    >
+      <img src="/gh.png" alt="github" class="github" />
+    </a>
+    <div class="floating-menu" :style="menu_style" @mousedown.stop>
       <div>
         <div class="info" v-if="info">{{ info }}</div>
         <div class="progressbar" v-if="isProcessing || isDone">
@@ -67,13 +74,97 @@
       </div>
       <div class="opt" v-if="!isProcessing && !isDone">
         <div>
-          <span class="description">Model</span>
-          <select v-model="model">
-            <option value="anime_4x">Anime (fast)</option>
-            <option value="anime_4x_plus">Anime (plus)</option>
-            <option value="general">General (fast)</option>
-            <!-- <option value="realx2plus">realx2plus</option> -->
-            <option value="realx4plus">General (plus)</option>
+          <span class="description">Type</span>
+          <select v-model="model_type">
+            <option value="realesrgan">Real-ESRGAN</option>
+            <option value="realcugan">Real-CUGAN</option>
+          </select>
+        </div>
+        <div v-if="model_type === 'realesrgan'">
+          <div>
+            <span class="description">Model</span>
+            <select v-model="model">
+              <option
+                v-for="modelOption in model_config.realesrgan.model"
+                :key="modelOption"
+                :value="modelOption"
+              >
+                {{ modelOption }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <span class="description">Scale</span>
+            <select v-model="factor">
+              <option
+                v-for="factorOption in model_config.realesrgan.factor"
+                :key="factorOption"
+                :value="factorOption"
+              >
+                {{ factorOption }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <span class="description">Tile Size</span>
+            <select v-model="tile_size">
+              <option
+                v-for="tileSizeOption in model_config.realesrgan.tile_size"
+                :key="tileSizeOption"
+                :value="tileSizeOption"
+              >
+                {{ tileSizeOption }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div v-else-if="model_type === 'realcugan'">
+          <div>
+            <span class="description">Denoise</span>
+            <select v-model="denoise">
+              <option
+                v-for="denoiseOption in model_config.realcugan.denoise[factor]"
+                :key="denoiseOption"
+                :value="denoiseOption"
+              >
+                {{ denoiseOption }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <span class="description">Scale</span>
+            <select v-model="factor">
+              <option
+                v-for="factorOption in model_config.realcugan.factor"
+                :key="factorOption"
+                :value="factorOption"
+              >
+                {{ factorOption }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <span class="description">Tile Size</span>
+            <select v-model="tile_size">
+              <option
+                v-for="tileSizeOption in model_config.realcugan.tile_size"
+                :key="tileSizeOption"
+                :value="tileSizeOption"
+              >
+                {{ tileSizeOption }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <span class="description">Overlap</span>
+          <select v-model="min_lap">
+            <option>0</option>
+            <option>4</option>
+            <option>8</option>
+            <option>12</option>
+            <option>16</option>
+            <option>20</option>
           </select>
         </div>
         <div>
@@ -84,15 +175,37 @@
           </select>
         </div>
       </div>
-      <button
-        class="run-button"
-        v-if="!isProcessing && !isDone"
-        @click="startTask"
-      >
-        <svg viewBox="0 0 24 24">
-          <path d="M8 5v14l11-7z" fill="rgba(255, 255, 255, 1)"></path>
-        </svg>
-      </button>
+      <div>
+        <div>
+          <button class="question-button" v-if="!isProcessing && !isDone">
+            <a
+              href="https://github.com/xororz/web-realesrgan?tab=readme-ov-file#models"
+              target="_blank"
+            >
+              <svg
+                viewBox="0 0 15 15"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="#fff"
+              >
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M7.5 1a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 12a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11zm1.55-8.42a1.84 1.84 0 0 0-.61-.42A2.25 2.25 0 0 0 7.53 4a2.16 2.16 0 0 0-.88.17c-.239.1-.45.254-.62.45a1.89 1.89 0 0 0-.38.62 3 3 0 0 0-.15.72h1.23a.84.84 0 0 1 .506-.741.72.72 0 0 1 .304-.049.86.86 0 0 1 .27 0 .64.64 0 0 1 .22.14.6.6 0 0 1 .16.22.73.73 0 0 1 .06.3c0 .173-.037.343-.11.5a2.4 2.4 0 0 1-.27.46l-.35.42c-.12.13-.24.27-.35.41a2.33 2.33 0 0 0-.27.45 1.18 1.18 0 0 0-.1.5v.66H8v-.49a.94.94 0 0 1 .11-.42 3.09 3.09 0 0 1 .28-.41l.36-.44a4.29 4.29 0 0 0 .36-.48 2.59 2.59 0 0 0 .28-.55 1.91 1.91 0 0 0 .11-.64 2.18 2.18 0 0 0-.1-.67 1.52 1.52 0 0 0-.35-.55zM6.8 9.83h1.17V11H6.8V9.83z"
+                />
+              </svg>
+            </a>
+          </button>
+        </div>
+        <button
+          class="run-button"
+          v-if="!isProcessing && !isDone"
+          @click="startTask"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" fill="rgba(255, 255, 255, 1)"></path>
+          </svg>
+        </button>
+      </div>
       <button class="save-button" v-if="isDone" @click="saveImage">
         <svg width="22" viewBox="0 -4 23.9 30">
           <path
@@ -179,31 +292,37 @@ export default {
       isProcessing: false,
       isDone: false,
       progress: 0,
-      model: "anime_4x",
-      scale: 4,
-      backend: "webgl",
-      modelzoo: {
-        anime_4x: {
-          fixed: true,
-          factor: 4,
+      model_type: "realcugan",
+      model_config: {
+        realesrgan: {
+          model: ["anime_fast", "anime_plus", "general_fast", "general_plus"],
+          factor: [4],
+          tile_size: [64],
         },
-        anime_4x_plus: {
-          fixed: false,
-          factor: 4,
-        },
-        general: {
-          fixed: true,
-          factor: 4,
-        },
-        realx2plus: {
-          fixed: false,
-          factor: 4,
-        },
-        realx4plus: {
-          fixed: false,
-          factor: 4,
+        realcugan: {
+          // factor: [2, 3, 4],
+          factor: [2, 4],
+          denoise: {
+            2: [
+              "conservative",
+              "no-denoise",
+              "denoise1x",
+              "denoise2x",
+              "denoise3x",
+            ],
+            3: ["conservative", "denoise3x"],
+            4: ["conservative", "no-denoise", "denoise3x"],
+          },
+          tile_size: [32, 48, 64, 128],
         },
       },
+      model: "anime_plus",
+      factor: 4,
+      denoise: "conservative",
+      tile_size: 64,
+      min_lap: 12,
+      save_quality: 92,
+      backend: "webgl",
       info: "",
       worker: new Worker(new URL("./worker.js", import.meta.url), {
         type: "module",
@@ -218,9 +337,61 @@ export default {
     backend() {
       localStorage.setItem("backend", this.backend);
     },
+    factor() {
+      localStorage.setItem("factor", this.factor);
+      if (
+        !this.model_config.realcugan.denoise[this.factor].includes(this.denoise)
+      ) {
+        this.denoise = this.model_config.realcugan.denoise[this.factor][0];
+      }
+    },
+    denoise() {
+      localStorage.setItem("denoise", this.denoise);
+    },
+    tile_size() {
+      localStorage.setItem("tile_size", this.tile_size);
+    },
+    min_lap() {
+      localStorage.setItem("min_lap", this.min_lap);
+    },
+    model_type() {
+      if (this.model_type === "realesrgan") {
+        if (!this.model_config.realesrgan.model.includes(this.model)) {
+          this.model = "anime_plus";
+        }
+        this.factor = 4;
+        this.tile_size = 64;
+      } else {
+      }
+    },
+  },
+  computed: {
+    menu_style() {
+      if (this.imgLoaded) {
+        if (this.isProcessing || this.isDone) {
+          return {
+            height: "60px",
+          };
+        }
+        return {
+          opacity: 1,
+        };
+      } else {
+        return {
+          opacity: 0,
+          height: "150px",
+          transition: "all 0s ease",
+        };
+      }
+    },
   },
   mounted() {
-    this.model = localStorage.getItem("model") || "anime_4x";
+    this.model_type = localStorage.getItem("model_type") || "realcugan";
+    this.model = localStorage.getItem("model") || "anime_plus";
+    this.factor = localStorage.getItem("factor") || 4;
+    this.denoise = localStorage.getItem("denoise") || "conservative";
+    this.tile_size = localStorage.getItem("tile_size") || 64;
+    this.min_lap = localStorage.getItem("min_lap") || 12;
     this.backend = localStorage.getItem("backend") || "webgl";
     window.addEventListener("resize", this.handleResize);
     this.initializeCanvas();
@@ -610,7 +781,7 @@ export default {
         this.progress = progress;
         if (done) {
           if (!this.hasAlpha || (this.hasAlpha && this.inputAlpha)) {
-            let factor = this.modelzoo[this.model].factor;
+            let factor = this.factor;
             this.output = new Img(
               factor * this.input.width,
               factor * this.input.height,
@@ -622,8 +793,11 @@ export default {
             worker.postMessage(
               {
                 input: this.inputAlpha.data.buffer,
-                fixed: this.modelzoo[this.model].fixed,
-                factor: this.modelzoo[this.model].factor,
+                factor: this.factor,
+                denoise: this.denoise,
+                tile_size: this.tile_size,
+                min_lap: this.min_lap,
+                model_type: this.model_type,
                 width: this.inputAlpha.width,
                 height: this.inputAlpha.height,
                 model: this.model,
@@ -695,8 +869,11 @@ export default {
       worker.postMessage(
         {
           input: this.input.data.buffer,
-          fixed: this.modelzoo[this.model].fixed,
-          factor: this.modelzoo[this.model].factor,
+          factor: this.factor,
+          denoise: this.denoise,
+          tile_size: this.tile_size,
+          min_lap: this.min_lap,
+          model_type: this.model_type,
           width: this.input.width,
           height: this.input.height,
           model: this.model,
@@ -753,8 +930,7 @@ export default {
       this.isProcessing = false;
       this.isDone = false;
       this.progress = 0;
-      this.model = localStorage.getItem("model") || "anime_4x";
-      this.scale = 4;
+      this.model = localStorage.getItem("model") || "anime_plus";
       this.backend = localStorage.getItem("backend") || "webgl";
       this.info = "";
     },

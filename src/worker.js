@@ -5,19 +5,14 @@ import upscale from "./upscale";
 
 self.addEventListener("message", async (e) => {
   const { data } = e;
-
-  let model_url = "";
-  if (data?.model === "anime_4x") {
-    model_url = `/realesrgan/anime_4x/model.json`;
-  }
-  if (data?.model === "anime_4x_plus") {
-    model_url = `/realesrgan/anime_4x_plus/model.json`;
-  }
-  if (data?.model === "general") {
-    model_url = `/realesrgan/general/model.json`;
-  }
-  if (data?.model === "realx4plus") {
-    model_url = `/realesrgan/realx4plus/model.json`;
+  let model_url;
+  let model_name;
+  if (data?.model_type === "realesrgan") {
+    model_url = `/realesrgan/${data?.model}-${data?.tile_size}/model.json`;
+    model_name = `realesrgan-${data?.model}-${data?.tile_size}`;
+  } else {
+    model_url = `/realcugan/${data?.factor}x-${data?.denoise}-${data?.tile_size}/model.json`;
+    model_name = `realcugan-${data?.factor}x-${data?.denoise}-${data?.tile_size}`;
   }
   if (!(await tf.setBackend(data?.backend || "webgl"))) {
     postMessage({
@@ -27,14 +22,14 @@ self.addEventListener("message", async (e) => {
   }
   let model;
   try {
-    model = await tf.loadGraphModel(`indexeddb://${data?.model}`);
+    model = await tf.loadGraphModel(`indexeddb://${model_name}`);
     console.log("Model loaded successfully");
-    // self.postMessage({ info: "Model loaded from cache" });
+    self.postMessage({ info: "Loaded from cache" });
   } catch (error) {
     self.postMessage({ info: "Downloading model" });
     model = await (async () => {
       const fetchedModel = await tf.loadGraphModel(model_url);
-      await fetchedModel.save(`indexeddb://${data?.model}`);
+      await fetchedModel.save(`indexeddb://${model_name}`);
       return fetchedModel;
     })();
   }
@@ -213,10 +208,18 @@ self.addEventListener("message", async (e) => {
     return output;
   }
   let factor = data?.factor || 4;
+  let tile_size = data?.tile_size || 64;
+  let min_lap = data?.min_lap || 12;
   const start = Date.now();
   let output;
   try {
-    output = await enlargeImageWithFixedInput(model, input, factor);
+    output = await enlargeImageWithFixedInput(
+      model,
+      input,
+      factor,
+      tile_size,
+      min_lap
+    );
   } catch (e) {
     postMessage({ alertmsg: e.toString() });
   }
