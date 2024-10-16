@@ -315,7 +315,7 @@ export default {
         realesrgan: {
           model: ["anime_fast", "anime_plus", "general_fast", "general_plus"],
           factor: [4],
-          tile_size: [64],
+          tile_size: [32, 48, 64, 96, 128, 192, 256],
         },
         realcugan: {
           // factor: [2, 3, 4],
@@ -331,7 +331,7 @@ export default {
             3: ["conservative", "denoise3x"],
             4: ["conservative", "no-denoise", "denoise3x"],
           },
-          tile_size: [32, 48, 64, 128],
+          tile_size: [32, 48, 64, 96, 128, 192, 256, 384, 512],
         },
       },
       model: "anime_plus",
@@ -373,12 +373,15 @@ export default {
       localStorage.setItem("min_lap", this.min_lap);
     },
     model_type() {
+      localStorage.setItem("model_type", this.model_type);
       if (this.model_type === "realesrgan") {
         if (!this.model_config.realesrgan.model.includes(this.model)) {
           this.model = "anime_plus";
         }
+        if (!this.model_config.realesrgan.tile_size.includes(this.tile_size)) {
+          this.tile_size = 64;
+        }
         this.factor = 4;
-        this.tile_size = 64;
       } else {
       }
     },
