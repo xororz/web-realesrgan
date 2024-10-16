@@ -32,6 +32,8 @@ npm run dev
 
 The first run will download the models and cache them in the browser indexedDB. No need to download them again.
 
+Unfortunately, since the transformed model must determine the input size, you need to download the model separately for each different tile size.
+
 I've converted 4 models to tensorflow.js format, you can find the original pytorch models in [xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)
 
 - anime_fast `RealESRGAN-animevideov3`
@@ -39,7 +41,7 @@ I've converted 4 models to tensorflow.js format, you can find the original pytor
 - general_fast `RealESRGAN-general-x4v3`
 - general_plus `RealESRGAN_x4plus`
 
-Now supports [bilibili/ailab/Real-CUGAN](https://github.com/bilibili/ailab/tree/main/Real-CUGAN)🎉🎉🎉, which offers nearly the same restoration quality as Real-ESRGAN but is **5x-10x faster**. 🥳🥳🥳
+Now supports [bilibili/ailab/Real-CUGAN](https://github.com/bilibili/ailab/tree/main/Real-CUGAN)🎉🎉🎉, which offers nearly the same restoration quality as Real-ESRGAN but is **up to 5x-10x faster**. 🥳🥳🥳
 
 ### Details
 
@@ -58,7 +60,7 @@ There is something wrong with Real-CUGAN 3x series models. 3x models are not ava
 
 ### Model Selection Guide
 
-With nearly the same restoration quality, Real-CUGAN is **5x-10x faster** than Real-ESRGAN. **Real-CUGAN is a better choice in most cases.**
+With nearly the same restoration quality, Real-CUGAN is **much faster** than Real-ESRGAN. **Real-CUGAN is a better choice in most cases.**
 
 But **Real-ESRGAN may be better when the input image is very small.** Here, input is a 120x120 image.
 
@@ -78,12 +80,14 @@ But **Real-ESRGAN may be better when the input image is very small.** Here, inpu
 
   - Denoise3x: This is a strong noise reduction, which will remove most or all of the noise, but it might also cause some loss of fine details, making the image smoother.
 
-- **Tile Size**: The default tile size is 64. 32, 48, 64, and 128 tile sizes are provided for RealCUGAN. The image is not enlarged by the model as a whole; instead, it is split into tiles. The model enlarges each tile sequentially, and then all the tiles are stitched together to form the entire image.
+- **Tile Size**: The image is not enlarged by the model as a whole; instead, it is split into tiles. The model enlarges each tile sequentially, and then all the tiles are stitched together to form the entire image.
 
   - On WebGL, larger tile sizes can make your device appear to lag during execution. If your device becomes laggy, you can reduce the tile size.
   - On WebGPU, larger tile sizes can speed up the entire process.
 
-    Example: 120x120 image cut to 64x64 tile
+  - If your GPU can handle it, the larger the tile size, the faster the overall computation. Otherwise, smaller slices would be faster.
+
+  **Example**: 120x120 image cut to 64x64 tiles
 
 ![example2](./src/assets/example2.jpg)
 
