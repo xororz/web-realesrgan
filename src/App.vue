@@ -1,10 +1,23 @@
 <template>
+  <!-- <div v-if="isDragOver" class="drag-mask">Drop your image here</div> -->
   <div
     ref="canvasContainer"
     class="canvas-container"
-    :class="{ 'canvas-container': true, bg: true, dark: imgLoaded }"
+    :class="{
+      'canvas-container': true,
+      bg: true,
+      dark: imgLoaded,
+      'drag-over': isDragOver,
+    }"
     @drop.prevent="handleDrop"
-    @dragover.prevent
+    @dragover.prevent="isDragOver = true"
+    @dragleave="
+      (e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          isDragOver = false;
+        }
+      }
+    "
     @mousedown="startDragging"
     @mouseup="stopDragging"
     @mousemove="dragImage"
@@ -13,7 +26,7 @@
     @touchmove="touchMove"
     @touchend="touchEnd"
   >
-    <div v-if="!imgLoaded" class="title">
+    <div v-if="!imgLoaded && !isDragOver" class="title">
       <div>SuperResolution in Your Browser</div>
       <img
         style="
@@ -30,7 +43,12 @@
     </div>
     <canvas ref="canvas"></canvas>
     <canvas ref="imgCanvas" style="display: none"></canvas>
-    <button v-show="!imgLoaded" class="upload-button" @click="handleClick">
+    <button
+      v-show="!imgLoaded"
+      class="upload-button"
+      @click="handleClick"
+      :style="upload_button_style"
+    >
       <div class="upload-container">
         <svg viewBox="0 0 24 24">
           <path
@@ -229,7 +247,7 @@
         </svg>
       </div>
     </div>
-    <div v-if="!imgLoaded" class="bottom-svg">
+    <div v-if="!imgLoaded & !isDragOver" class="bottom-svg">
       <svg width="100%" viewBox="0 0 1920 140" class="_top-wave_vzxu7_106">
         <path
           fill="#76c8fe"
@@ -381,6 +399,15 @@ export default {
           opacity: 0,
           height: "150px",
           transition: "all 0s ease",
+        };
+      }
+    },
+    upload_button_style() {
+      if (this.isDragOver) {
+        return {
+          width: "256px",
+          height: "256px",
+          "background-color": "pink",
         };
       }
     },
@@ -565,6 +592,7 @@ export default {
       }
     },
     startDragging(event) {
+      if (!this.imgLoaded) return;
       const rect = this.$refs.canvas.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       if (Math.abs(mouseX - this.linePosition / this.dpr) < 12) {
@@ -574,6 +602,7 @@ export default {
       this.dragging = true;
     },
     stopDragging() {
+      if (!this.imgLoaded) return;
       if (this.draggingLine) {
         this.stopDraggingLine();
         return;
