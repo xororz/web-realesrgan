@@ -37,6 +37,13 @@ self.addEventListener("message", async (e) => {
     return;
   }
   const input = new Img(data.width, data.height, new Uint8Array(data.input));
+  const width_ori = input.width;
+  const height_ori = input.height;
+  input.padToTileSize(data?.tile_size || 64);
+  let withPadding = false;
+  if (input.width !== width_ori || input.height !== height_ori) {
+    withPadding = true;
+  }
   let hasAlpha = data.hasAlpha;
   function sendprogress(progress) {
     if (hasAlpha) {
@@ -222,6 +229,9 @@ self.addEventListener("message", async (e) => {
     );
   } catch (e) {
     postMessage({ alertmsg: e.toString() });
+  }
+  if (withPadding) {
+    output.cropToOriginalSize(width_ori * factor, height_ori * factor);
   }
   const end = Date.now();
   console.log("Time:", end - start);
