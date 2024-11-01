@@ -1,6 +1,6 @@
 # web-realesrgan
 
-Run Real-ESRGAN in the browser with tensorflow.js
+Run Real-ESRGAN/Real-CUGAN in the browser with tensorflow.js
 
 ## Usage
 
@@ -21,12 +21,26 @@ Sure, PNG with alpha channel is supported.
 
 All models are quantized to FP16, which reduces the size of the model download and has no noticeable difference in performance compared to FP32 models. However, currently, the computation speed of FP16 is the same as FP32. Future updates from the TensorFlow.js team are expected to improve FP16 computation performance on WebGPU.
 
+### 🚀️ ️Advantages
+
+**Accessible Anywhere**: The tool can be conveniently run on any device, such as a mobile phone📱️, without needing to download or install any software. This makes it possible to upscale images anytime, anywhere, directly in your browser.
+
+### ⚠️️ Limitations
+
+**Performance Gap**: Even with WebGPU enabled, the performance of running models in the browser is slower than running them locally. WebGPU’s speed is approximately half of the speed you’d achieve with local execution. On local devices, FP16 computation provides significant acceleration, whereas in tfjs-webgpu for now, FP16 and FP32 run at the same speed.
+
+If you need to upscale a lot of images, it is recommended to download and use the official Real-ESRGAN and Real-CUGAN repositories for local execution.
+
 ### Development
 
 ```bash
 npm install
 npm run dev
 ```
+
+WebGPU cannot be used over HTTP. If you're developing this project locally, you can use OpenSSL to self-sign a certificate.
+
+See https://developer.chrome.com/docs/web-platform/webgpu/troubleshooting-tips
 
 ## Models
 
