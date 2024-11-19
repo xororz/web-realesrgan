@@ -11,8 +11,9 @@
     "type-check": "vue-tsc --build --force"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^4.17.0",
-    "@tensorflow/tfjs-backend-webgpu": "^4.17.0",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
+    "@tensorflow/tfjs-core": "^4.22.0",
     "vue": "^3.4.21"
   },
   "devDependencies": {
